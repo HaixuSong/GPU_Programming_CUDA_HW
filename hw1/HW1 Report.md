@@ -347,4 +347,4 @@ There's some hardware limitations that will take charge only when the size of th
 
 
 
-[Link]: https://github.com/HaixuSong/GPU_Programming_CUDA_HW/tree/master/hw1	"Here is my Github link of my homework"
+Github: https://github.com/HaixuSong/GPU_Programming_CUDA_HW/tree/master/hw1
