@@ -215,6 +215,29 @@ Done matrix multiplication with GPU.
 Result check: ---PASS---.
 ```
 
+When the matrix size goes to 20000, which is about the maximum of my device can carry. The result is:
+
+```
+Your_Directory>matrixMul.exe 20000 20000 20000
+
+Number Of Arguments Passed: 4
+----Following Are The Command Line Arguments Passed----
+argv[1]: 20000
+argv[2]: 20000
+argv[3]: 20000
+Continuing with j=20000, k=20000, l=20000
+Done initializing matrix A with size 20000*20000 and matrix B with 20000*20000
+Done allocating space in device.
+Done copying memory from host to device
+Done initializing block dimention and grid dimention.
+Done matrix multiplication with GPU.
+0 microseconds used.
+```
+
+We can see that the result can calculated within 1microsecond. But this is the largest matrix my device can hold. Let's do the math. Assume A \* B = C are 3 square matrix with width N, then in order to hold all 3 matrix in the global memory, we may use 3N^2 \* sizeof(float) = 12N^2 byte space. Mine is 6GB = 6\*1024\*1024\*1024 = 6,442,450,944 bytes. So N is about 23,170. We can also prove that from the GPU behavior tracing from Windows Task Manager.
+
+![image-20201007194512380](img/image-20201007194512380.png)
+
 Since the most basic unit of time in C is microsecond, but the code takes only half of it, So if we use this time to calculate GFLOPS will have a huge error. 
 
 The result is totally within my previous imagination. Sequence code takes a long time, but multi-threads GPU takes just a short short instant like FLASH. Two ways got the same result. The code works well even when the matrix is not square or the matrix size is not multiple of the TILE_SIZE.

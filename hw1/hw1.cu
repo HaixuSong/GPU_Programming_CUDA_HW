@@ -54,15 +54,18 @@ int main(int argc, char* argv[]){
 
     // CPU code for calculating the matrix multiplication
     // Use this result to varify the kernel result later
-    float* C_CPU = (float*)malloc(j * l * sizeof(float));
+    // Only do this step when j, k, l is below 5000
     float* C_GPU = (float*)malloc(j * l * sizeof(float));
-    start = clock();
-    matrixMulCPU(A, B, C_CPU, j, k, l);
-    finish = clock();
-    printf("\nDone matrix multiplication with CPU");
-    total_time = (int)(finish - start);
-    printf("\n%d microseconds used.\n", total_time);
-    showMatrix(C_CPU, j, l);
+    float* C_CPU = (float*)malloc(j * l * sizeof(float));
+    if (k < 5000 && j < 5000 && l < 5000) {
+        start = clock();
+        matrixMulCPU(A, B, C_CPU, j, k, l);
+        finish = clock();
+        printf("\nDone matrix multiplication with CPU");
+        total_time = (int)(finish - start);
+        printf("\n%d microseconds used.\n", total_time);
+        showMatrix(C_CPU, j, l);
+    }
     // Matrix multipication with CPU ends
 
     // Allocate device memory and copy data from host to device
@@ -100,7 +103,7 @@ int main(int argc, char* argv[]){
     // Done copying results and freeing device memory
 
     // Check the result of the Calculated Matrix
-    resultCheck(C_CPU, C_GPU, j * l);
+    if (k < 5000 && j < 5000 && l < 5000) resultCheck(C_CPU, C_GPU, j * l);
     // Done result checking.
 
     return 0;
