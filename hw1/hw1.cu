@@ -88,14 +88,14 @@ int main(int argc, char* argv[]){
     // launch CUDA device kernel
     start = clock();
     matrixMulGPU<<< grid, threads>>>(d_A, d_B, d_C, j, k, l);
-    finish = clock();
-    printf("\nDone matrix multiplication with GPU.");
-    total_time = (int)(finish - start);
-    printf("\n%d microseconds used.\n", total_time);
     // Done CUDA device kernel
 
     // Copy results from device to host and free device memory
     cudaMemcpy(C_GPU, d_C, j * l * sizeof(float), cudaMemcpyDeviceToHost);
+    finish = clock();
+    printf("\nDone matrix multiplication with GPU.");
+    total_time = (int)(finish - start);
+    printf("\n%d microseconds used.\n", total_time);
     showMatrix(C_GPU, j, l);
     cudaFree(d_A);
     cudaFree(d_B);

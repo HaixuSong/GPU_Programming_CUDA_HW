@@ -142,6 +142,8 @@ Block size is pre-defined as 16, same as the tile size. You may change it and re
 
 #### Step 7: Launch CUDA Kernel
 
+Note: why I called time stopping after cudaMemcpy? This is because the CUDA function is async, which means after calling CUDA function, host code continue going on, while the GPU is still calculating. So if we put the time stopping after another CUDA API, it will wait this API done running, then stop the watch. So this may cause a little error of GFLOPS calculation, but it's better than 0 microseconds. 
+
 #### Step 8: Get Result and Free Device Memory
 
 Copy the result from device global memory to host. Then free those memory allocated for these matrices.
@@ -154,7 +156,7 @@ I used relative error as the metric. The machine zero is pre-defined as Macro. I
 
 My code runs well. Here's some running examples:
 
-When the matrix is small, it runs fast both in CPU and GPU:
+When the matrix is small, it runs fast both in CPU and GPU. In this case, there's about 100% thread divergence happed:
 
 ```
 Your_Directory>matrixMul.exe 2 3 2
@@ -165,19 +167,19 @@ argv[1]: 2
 argv[2]: 3
 argv[3]: 2
 Continuing with j=2, k=3, l=2
-0.069887        2.538224        4.166997
-2.644429        5.229652        2.319407
+6.886807        7.546922        5.529038
+1.885434        4.930571        1.637013
 
-5.566271        5.080111
-1.521042        0.306101
-7.994934        6.402173
+6.517228        8.511002
+5.562609        9.004486
+1.844234        2.803430
 
 Done initializing matrix A with size 2*3 and matrix B with 3*2
 Done matrix multiplication with CPU
 0 microseconds used.
 
-37.564629       27.809828
-41.217636       29.884033
+97.060303       142.070053
+42.733669       65.033432
 
 Done allocating space in device.
 Done copying memory from host to device
@@ -185,13 +187,13 @@ Done initializing block dimention and grid dimention.
 Done matrix multiplication with GPU.
 0 microseconds used.
 
-37.564629       27.809826
-41.217632       29.884035
+97.060303       142.070053
+42.733669       65.033432
 
 Result check: ---PASS---.
 ```
 
-When the matrix is large enough like 2000, the CPU will take about 1 minute to have it done, while the GPU takes just half a microsecond.
+When the matrix is large enough like 2000, the CPU will take about 1.5 minute to have it done, while the GPU takes just 50 microsecond.
 
 ```
 Your_Directory>matrixMul.exe 2000 3000 2000
@@ -204,13 +206,13 @@ argv[3]: 2000
 Continuing with j=2000, k=3000, l=2000
 Done initializing matrix A with size 2000*3000 and matrix B with 3000*2000
 Done matrix multiplication with CPU
-94111 microseconds used.
+94749 microseconds used.
 
 Done allocating space in device.
 Done copying memory from host to device
 Done initializing block dimention and grid dimention.
 Done matrix multiplication with GPU.
-0 microseconds used.
+50 microseconds used.
 
 Result check: ---PASS---.
 ```
@@ -231,14 +233,14 @@ Done allocating space in device.
 Done copying memory from host to device
 Done initializing block dimention and grid dimention.
 Done matrix multiplication with GPU.
-0 microseconds used.
+22314 microseconds used.
 ```
 
 We can see that the result can calculated within 1microsecond. But this is the largest matrix my device can hold. Let's do the math. Assume A \* B = C are 3 square matrix with width N, then in order to hold all 3 matrix in the global memory, we may use 3N^2 \* sizeof(float) = 12N^2 byte space. Mine is 6GB = 6\*1024\*1024\*1024 = 6,442,450,944 bytes. So N is about 23,170. We can also prove that from the GPU behavior tracing from Windows Task Manager.
 
-![image-20201007194512380](img/image-20201007194512380.png)
+![image-20201009225439980](img/image-20201009225439980.png)
 
-Since the most basic unit of time in C is microsecond, but the code takes only half of it, So if we use this time to calculate GFLOPS will have a huge error. 
+Let's calculate the GFLOPS. With j = k = l = 20000, the float point operations we've done is actually (20000\*20000)\*(20000+19999) = 15999600000000 and we did it in 22314 microseconds = 22.314s. So GFLOPS = 15999600000000 / 22.314 = 717,020,704,490.4544 = 717 GFLOPS. I checked the official website of RTX 2060 GPU. It said this chip's highest 32digit float-point can calculate at a maximum 6.451TFLOPS. Our result is quite reasonable. 
 
 The result is totally within my previous imagination. Sequence code takes a long time, but multi-threads GPU takes just a short short instant like FLASH. Two ways got the same result. The code works well even when the matrix is not square or the matrix size is not multiple of the TILE_SIZE.
 
